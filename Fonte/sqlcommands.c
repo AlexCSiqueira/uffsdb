@@ -1415,4 +1415,8 @@ void createIndex(rc_insert *t) {
   printf("CREATE INDEX\n");
 }
 
+void update(){
+    printf("DEU BOM!!!!");
+};
+
 ///////

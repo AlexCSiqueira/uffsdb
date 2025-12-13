@@ -99,6 +99,7 @@ void setObjName(char **nome) {
 }
 
 void setColumnInsert(char **nome) {
+    printf("CHEGAMO");
     GLOBAL_DATA.columnName = realloc(GLOBAL_DATA.columnName, (GLOBAL_PARSER.col_count+1)*sizeof(char *));
 
     GLOBAL_DATA.columnName[GLOBAL_PARSER.col_count] = malloc(sizeof(char)*(strlen(*nome)+1));
@@ -336,6 +337,13 @@ int interface() {
                             break;
                         case OP_CREATE_INDEX:
                             createIndex(&GLOBAL_DATA);
+                            break;
+                        case OP_UPDATE:
+                            resultado = handleTableOperation(&QUERY, 'd');
+                            if (resultado) {
+                                update();
+                                resultado = NULL;
+                            }
                             break;
                         default: break;
                     }

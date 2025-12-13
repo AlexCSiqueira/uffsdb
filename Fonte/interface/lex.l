@@ -42,6 +42,8 @@
 (?i:DROP)						return DROP;
 (?i:CONTRIBUTORS)               return CONTR;
 (?i:IMPLEMENT)                  return IMPLEMENT;
+(?i:UPDATE)                  return UPDATE;
+(?i:SET)                  return SET;
 help							return HELP;
 [\\]his						return HISTORY;
 [\\]his+[^\n]*				{invalidCommand(yytext);};

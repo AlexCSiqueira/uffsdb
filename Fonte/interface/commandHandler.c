@@ -8,8 +8,7 @@
    #include "commandHandler.h"
 #endif
 
-char *comandos[] = {"select", "from", "where", "insert into", "values", "drop", "create", "table", "database", "index on", "int", "varchar", "char", NULL};
-
+char *comandos[] = {"select", "from", "where", "insert into", "values", "drop", "create", "table", "database", "index on", "int", "varchar", "char", "update", "set", NULL};
 
 // Função que retorna uma palavra que casa com o que foi digitado
 char *complete(const char *text, int state) {
