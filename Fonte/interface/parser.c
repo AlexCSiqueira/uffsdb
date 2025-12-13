@@ -341,7 +341,7 @@ int interface() {
                         case OP_UPDATE:
                             resultado = handleTableOperation(&QUERY, 'd');
                             if (resultado) {
-                                update();
+                                op_update(resultado, QUERY.tabela);
                                 resultado = NULL;
                             }
                             break;
