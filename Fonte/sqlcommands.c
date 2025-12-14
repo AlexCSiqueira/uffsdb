@@ -1420,19 +1420,22 @@ void update(){
 };
 
 
-void op_update(Lista *toUpdateTuples, char *tabelaName) {
+void op_update(Lista *toUpdateTuples, char *tabelaName, rc_insert *GLOBAL) {
     tp_table *esquema;
     struct fs_objects objeto = leObjeto(tabelaName);
     esquema = leSchema(objeto);
     tp_buffer *bufferpoll = initbuffer();
     int countUpdatedTuples = 0;
 
-     int tuplaCount = 0, erro;
+    int tuplaCount = 0, erro;
     do {
         erro = colocaTuplaBuffer(bufferpoll, tuplaCount, esquema, objeto);
         tuplaCount++;
     } while(erro == SUCCESS || erro == ERRO_LEITURA_DADOS_DELETADOS);
-    tuplaCount--; // ajusta para o número correto de páginas lidas 
+    tuplaCount--; 
+
+    table *tab     = (table *)uffslloc(sizeof(table));
+    tab->esquema = abreTabela(tabelaName, &objeto, &tab->esquema);
    
     for (Nodo *temp = toUpdateTuples->prim; temp; temp = temp->prox) {
         tupla *t = (tupla *)temp->inf;
@@ -1445,10 +1448,11 @@ void op_update(Lista *toUpdateTuples, char *tabelaName) {
     }
 
     for (int p = 0; p < PAGES && bufferpoll[p].nrec; p++) {
-        int result = writeBufferToDisk(bufferpoll, &objeto, p, bufferpoll->nrec*tamTupla(esquema, objeto));
+        int result = writeBufferToDisk(bufferpoll, &objeto, p,
+                       bufferpoll->nrec * tamTupla(esquema, objeto));
+                       
         if (!result) {
             fprintf(stderr, "ERROR: failed to persist changes to disk\n");
-
             return;
         }
     }
