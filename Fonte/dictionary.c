@@ -743,42 +743,6 @@ column *insereValor(table  *tab, column *c, char *nomeCampo, char *valorCampo) {
 }
 //////
 
-//Atualiza valor de determinada coluna: UPDATE
-//me baseei na insereValor, depois precisa chamada no update chamado pelo lex...
-column *atualizaValor(table  *tab, column *c, char *nomeCampo, char *novoValorCampo){
-    if (!c) return NULL; 
-
-    column *aux = c;
-    while (aux){ //verifica todos os nós até encontrar o correspondente
-        if (strcasecmp(aux->nomeCampo, nomeCampo) == 0) { //caso seja a tupla que procuromos
-            if (novoValorCampo == COLUNA_NULL){
-                if (aux->valorCampo != COLUNA_NULL) free(aux->valorCampo); //se a coluna não for null ainda, dou free para não causar vazamento de memória
-
-                aux->valorCampo = COLUNA_NULL;
-                return c;
-            }
-            //caso dê td certo, vamos encapsular oq se repete pro código ficar mais limpo
-            int tam = retornaTamanhoValorCampo(nomeCampo, tab);
-            char tipo = retornaTamanhoTipoDoCampo(nomeCampo,tab);
-            int n = strlen(nomeCampo)+1;
-
-            if (tipo == 'S' && n > tam) {
-                n = tam;
-                printf("WARNING: value of column \"%s\" exceeded the size limit and was truncated.\n", nomeCampo);
-            }
-
-            aux->valorCampo = malloc(n);
-            strncpy(aux->valorCampo, novoValorCampo, n);
-
-            return c;
-        }
-        aux = aux->next;
-    }
-    //precisamos ver como vamos tratar se deu falha ou não, talvez através de uma flag para tratar numa mensgaem caso não seja encontrada a tupla procurada
-    //por enquanto acho q retornar null é ok.
-    return NULL;
-}
-
 /*------------------------------------------------------------------------------------------
 Objetivo: Mostrar as tabelas do banco de dados ou, em específico, os atributos de uma tabela
 ------------------------------------------------------------------------------------------*/

@@ -117,8 +117,6 @@ int finalizaTabela(table *);
 */
 column *insereValor(table  *, column *, char *, char *);
 ////
-column *atualizaValor(table  *, column *, char *, char *);
-////
 int retornaTamanhoValorCampo(char *nomeCampo, table  *tab);
 ///////
 char retornaTamanhoTipoDoCampo(char *nomeCampo, table  *tab);

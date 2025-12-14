@@ -150,6 +150,6 @@ int verifyFieldName(char **, int );
 ////
 int verifyFK(char *, char *);
 
-void op_update(Lista *toUpdateTuples, char *tabelaName);
+void op_update(Lista *toUpdateTuples, char *tabelaName, rc_insert *GLOBAL);
 
 void update();

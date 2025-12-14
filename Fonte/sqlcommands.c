@@ -1415,10 +1415,61 @@ void createIndex(rc_insert *t) {
   printf("CREATE INDEX\n");
 }
 
+//Atualiza valor de determinada coluna: UPDATE
+//me baseei na insereValor
+tupla *atualizaValor(table  *tab, tupla *t, char *nomeCampo, char *novoValorCampo, tp_buffer *bufferpoll){
+    int offset = 0;
+    if (!t) return NULL; 
+
+
+    for (int i = 0; i < t->ncols; i++){ //verifica todos os nós até encontrar o correspondente
+        column c = t->column[i];
+        int tam = retornaTamanhoValorCampo(nomeCampo, tab);
+        if (strcasecmp(c.nomeCampo, nomeCampo) == 0) { //caso seja a tupla que procuromos
+            if (novoValorCampo == COLUNA_NULL){
+                if (c.valorCampo != COLUNA_NULL) free(c.valorCampo); //se a coluna não for null ainda, dou free para não causar vazamento de memória
+
+                c.valorCampo = COLUNA_NULL;
+                return t;
+            }
+            //caso dê td certo, vamos encapsular oq se repete pro código ficar mais limpo
+            
+            char tipo = retornaTamanhoTipoDoCampo(nomeCampo,tab);
+            int n = strlen(novoValorCampo)+1;
+
+            if (tipo == 'S' && n > tam) {
+                n = tam;
+                printf("WARNING: value of column \"%s\" exceeded the size limit and was truncated.\n", nomeCampo);
+            }
+
+
+            void *endereco = bufferpoll[t->bufferPage].data+t->offset + offset + i + 2; 
+
+            if(c.tipoCampo == 'I'){
+                int v = atoi(novoValorCampo);
+                memcpy(endereco, &v, tam);
+            }
+            else if(c.tipoCampo == 'D'){
+             double v = atof(novoValorCampo);
+             memcpy(endereco, &v, tam);
+            }
+            else {
+            memcpy(endereco, novoValorCampo, tam);
+            }
+
+            bufferpoll[t->bufferPage].db = 1; //marca a página como modificada
+            return t;
+        }
+        offset += tam;
+    }
+    //precisamos ver como vamos tratar se deu falha ou não, talvez através de uma flag para tratar numa mensgaem caso não seja encontrada a tupla procurada
+    //por enquanto acho q retornar null é ok.
+    return NULL; 
+}
+
 void update(){
     printf("DEU BOM!!!!");
 };
-
 
 void op_update(Lista *toUpdateTuples, char *tabelaName, rc_insert *GLOBAL) {
     tp_table *esquema;
@@ -1434,15 +1485,16 @@ void op_update(Lista *toUpdateTuples, char *tabelaName, rc_insert *GLOBAL) {
     } while(erro == SUCCESS || erro == ERRO_LEITURA_DADOS_DELETADOS);
     tuplaCount--; 
 
-    table *tab     = (table *)uffslloc(sizeof(table));
+    table *tab = (table *)malloc(sizeof(table));
     tab->esquema = abreTabela(tabelaName, &objeto, &tab->esquema);
    
     for (Nodo *temp = toUpdateTuples->prim; temp; temp = temp->prox) {
         tupla *t = (tupla *)temp->inf;
         
         //atualiza a tupla 
-        update();
+        atualizaValor( tab, t, GLOBAL->columnName[0], GLOBAL->values[0], bufferpoll);
 
+        //*(bufferpoll[t->bufferPage].data+t->offset) = 1; //marca a tupla como deletada
         bufferpoll[t->bufferPage].db = 1; //marca a página como modificada
         countUpdatedTuples++;
     }
@@ -1450,7 +1502,7 @@ void op_update(Lista *toUpdateTuples, char *tabelaName, rc_insert *GLOBAL) {
     for (int p = 0; p < PAGES && bufferpoll[p].nrec; p++) {
         int result = writeBufferToDisk(bufferpoll, &objeto, p,
                        bufferpoll->nrec * tamTupla(esquema, objeto));
-                       
+
         if (!result) {
             fprintf(stderr, "ERROR: failed to persist changes to disk\n");
             return;
@@ -1459,4 +1511,5 @@ void op_update(Lista *toUpdateTuples, char *tabelaName, rc_insert *GLOBAL) {
     printf("UPDATED %d %s\n", countUpdatedTuples,
            (countUpdatedTuples != 1) ? "rows" : "row");
 }
+
 ///////
