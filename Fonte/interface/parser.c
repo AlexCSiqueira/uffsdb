@@ -99,7 +99,6 @@ void setObjName(char **nome) {
 }
 
 void setColumnInsert(char **nome) {
-    printf("CHEGAMO");
     GLOBAL_DATA.columnName = realloc(GLOBAL_DATA.columnName, (GLOBAL_PARSER.col_count+1)*sizeof(char *));
 
     GLOBAL_DATA.columnName[GLOBAL_PARSER.col_count] = malloc(sizeof(char)*(strlen(*nome)+1));

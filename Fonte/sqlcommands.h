@@ -152,4 +152,4 @@ int verifyFK(char *, char *);
 
 void op_update(Lista *toUpdateTuples, char *tabelaName, rc_insert *GLOBAL);
 
-void update();
+tupla *atualizaValor(table  *tab, tupla *t, char *nomeCampo, char *novoValorCampo, tp_buffer *bufferpoll);

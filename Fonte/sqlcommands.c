@@ -1421,10 +1421,9 @@ tupla *atualizaValor(table  *tab, tupla *t, char *nomeCampo, char *novoValorCamp
     int offset = 0;
     if (!t) return NULL; 
 
-
     for (int i = 0; i < t->ncols; i++){ //verifica todos os nós até encontrar o correspondente
         column c = t->column[i];
-        int tam = retornaTamanhoValorCampo(nomeCampo, tab);
+        int tam = retornaTamanhoValorCampo(c.nomeCampo, tab);
         if (strcasecmp(c.nomeCampo, nomeCampo) == 0) { //caso seja a tupla que procuromos
             if (novoValorCampo == COLUNA_NULL){
                 if (c.valorCampo != COLUNA_NULL) free(c.valorCampo); //se a coluna não for null ainda, dou free para não causar vazamento de memória
@@ -1432,7 +1431,6 @@ tupla *atualizaValor(table  *tab, tupla *t, char *nomeCampo, char *novoValorCamp
                 c.valorCampo = COLUNA_NULL;
                 return t;
             }
-            //caso dê td certo, vamos encapsular oq se repete pro código ficar mais limpo
             
             char tipo = retornaTamanhoTipoDoCampo(nomeCampo,tab);
             int n = strlen(novoValorCampo)+1;
@@ -1442,8 +1440,7 @@ tupla *atualizaValor(table  *tab, tupla *t, char *nomeCampo, char *novoValorCamp
                 printf("WARNING: value of column \"%s\" exceeded the size limit and was truncated.\n", nomeCampo);
             }
 
-
-            void *endereco = bufferpoll[t->bufferPage].data+t->offset + offset + i + 2; 
+            void *endereco = bufferpoll[t->bufferPage].data+t->offset + offset + t->ncols + 1;
 
             if(c.tipoCampo == 'I'){
                 int v = atoi(novoValorCampo);
@@ -1462,14 +1459,8 @@ tupla *atualizaValor(table  *tab, tupla *t, char *nomeCampo, char *novoValorCamp
         }
         offset += tam;
     }
-    //precisamos ver como vamos tratar se deu falha ou não, talvez através de uma flag para tratar numa mensgaem caso não seja encontrada a tupla procurada
-    //por enquanto acho q retornar null é ok.
     return NULL; 
 }
-
-void update(){
-    printf("DEU BOM!!!!");
-};
 
 void op_update(Lista *toUpdateTuples, char *tabelaName, rc_insert *GLOBAL) {
     tp_table *esquema;
@@ -1477,6 +1468,7 @@ void op_update(Lista *toUpdateTuples, char *tabelaName, rc_insert *GLOBAL) {
     esquema = leSchema(objeto);
     tp_buffer *bufferpoll = initbuffer();
     int countUpdatedTuples = 0;
+    tupla *tValidar = NULL;
 
     int tuplaCount = 0, erro;
     do {
@@ -1492,7 +1484,11 @@ void op_update(Lista *toUpdateTuples, char *tabelaName, rc_insert *GLOBAL) {
         tupla *t = (tupla *)temp->inf;
         
         //atualiza a tupla 
-        atualizaValor( tab, t, GLOBAL->columnName[0], GLOBAL->values[0], bufferpoll);
+        tValidar = atualizaValor( tab, t, GLOBAL->columnName[0], GLOBAL->values[0], bufferpoll);
+
+        if (tValidar == NULL){
+            printf("ERROR: unable to find column '%s'\n", GLOBAL->columnName[0]);
+        }
 
         //*(bufferpoll[t->bufferPage].data+t->offset) = 1; //marca a tupla como deletada
         bufferpoll[t->bufferPage].db = 1; //marca a página como modificada
