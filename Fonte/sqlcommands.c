@@ -1415,8 +1415,17 @@ void createIndex(rc_insert *t) {
   printf("CREATE INDEX\n");
 }
 
+//Verifica se a coluna a ser alterada é PK
+int isPK(table *tab, const char *nomeCampo) { 
+    for (tp_table *c = tab->esquema; c; c = c->next) { //percorre todas as colunas
+        if (strcasecmp(c->nome, nomeCampo) == 0) { //verifica se é o campo desejado
+            return (c->chave == PK); //retorna se é pk ou não
+        }
+    }
+    return 0; 
+}
+
 //Atualiza valor de determinada coluna: UPDATE
-//me baseei na insereValor
 tupla *atualizaValor(table  *tab, tupla *t, char *nomeCampo, char *novoValorCampo, tp_buffer *bufferpoll){
     int offset = 0;
     if (!t) return NULL; 
@@ -1424,6 +1433,12 @@ tupla *atualizaValor(table  *tab, tupla *t, char *nomeCampo, char *novoValorCamp
     for (int i = 0; i < t->ncols; i++){ //verifica todos os nós até encontrar o correspondente
         column c = t->column[i];
         int tam = retornaTamanhoValorCampo(c.nomeCampo, tab);
+
+        if (isPK(tab, nomeCampo)) {
+            printf("WARNING: cannot update primary key column '%s'\n", nomeCampo);
+            return NULL;
+        }
+
         if (strcasecmp(c.nomeCampo, nomeCampo) == 0) { //caso seja a tupla que procuromos
             if (novoValorCampo == COLUNA_NULL){
                 if (c.valorCampo != COLUNA_NULL) free(c.valorCampo); //se a coluna não for null ainda, dou free para não causar vazamento de memória
@@ -1431,7 +1446,7 @@ tupla *atualizaValor(table  *tab, tupla *t, char *nomeCampo, char *novoValorCamp
                 c.valorCampo = COLUNA_NULL;
                 return t;
             }
-            
+
             char tipo = retornaTamanhoTipoDoCampo(nomeCampo,tab);
             int n = strlen(novoValorCampo)+1;
 
@@ -1459,6 +1474,7 @@ tupla *atualizaValor(table  *tab, tupla *t, char *nomeCampo, char *novoValorCamp
         }
         offset += tam;
     }
+    printf("WARNING: unable to find column '%s'\n", nomeCampo);
     return NULL; 
 }
 
@@ -1482,15 +1498,15 @@ void op_update(Lista *toUpdateTuples, char *tabelaName, rc_insert *GLOBAL) {
    
     for (Nodo *temp = toUpdateTuples->prim; temp; temp = temp->prox) {
         tupla *t = (tupla *)temp->inf;
-        
+
         //atualiza a tupla 
         tValidar = atualizaValor( tab, t, GLOBAL->columnName[0], GLOBAL->values[0], bufferpoll);
 
         if (tValidar == NULL){
-            printf("ERROR: unable to find column '%s'\n", GLOBAL->columnName[0]);
+            printf("ERROR: failed to update column '%s' on table '%s'.\n", GLOBAL->columnName[0], tabelaName);
+            return;
         }
 
-        //*(bufferpoll[t->bufferPage].data+t->offset) = 1; //marca a tupla como deletada
         bufferpoll[t->bufferPage].db = 1; //marca a página como modificada
         countUpdatedTuples++;
     }
